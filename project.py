@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-
+# hi bokka#
 class Citizen:
     def __init__(self, name, nic, age, state):
         self.name = name
