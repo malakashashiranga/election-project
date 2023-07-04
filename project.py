@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+#  hi bokkah#
 
 class Citizen:
     def __init__(self, name, nic, age, state):
