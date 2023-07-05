@@ -2,6 +2,7 @@ import mysql.connector
 
 #test
 
+
 def home():
     print("\t\t\t\t\t\t****************************")
     print("\t\t\t\t\t\tElection Registration System")
