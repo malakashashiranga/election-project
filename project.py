@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-# hi bokka#
 
 # akasattacha bummatta#
 class Citizen:
