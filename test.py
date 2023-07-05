@@ -2,7 +2,7 @@ import mysql.connector
 
 
 def home():
-    print("\t\t\t\t\t\t****************************")
+    print("\n\n\t\t\t\t\t\t****************************")
     print("\t\t\t\t\t\tElection Registration System")
     print("\t\t\t\t\t\t****************************")
 
@@ -18,17 +18,10 @@ def create_database(cursor):
 
 def create_citizen_table(cursor):
     cursor.execute('''CREATE TABLE IF NOT EXISTS citizens 
-                      (nic VARCHAR(255), 
-                       name VARCHAR(255) PRIMARY KEY, 
+                      (nic VARCHAR(255) PRIMARY KEY, 
+                       name VARCHAR(255), 
                        age INT, 
                        state_province VARCHAR(255))''')
-
-
-def create_candidates_table(cursor):
-    cursor.execute('''CREATE TABLE IF NOT EXISTS candidates
-                          (nic VARCHAR(255) PRIMARY KEY,
-                           party VARCHAR(255),
-                           education VARCHAR(255))''')
 
 
 class Citizen:
@@ -45,27 +38,12 @@ class Citizen:
         return self.age > 18
 
 
-class Candidate(Citizen):
-    def __init__(self, nic, name, age, state_province, party, education):
-        super().__init__(nic, name, age, state_province)
-        self.party = party
-        self.education = education
-
-
 def get_citizen_details():
-    nic = input("Enter NIC: ")
     name = input("Enter name: ")
     state_province = input("Enter state/province: ")
     age = int(input("Enter age: "))
 
-    return nic, name, state_province, age
-
-
-def get_candidate_details():
-
-    party = input("enter party name: ")
-    education = input("enter education qualifications: ")
-    return party, education
+    return name, state_province, age
 
 
 def add_citizen_to_db(citizen, cursor):
@@ -76,7 +54,6 @@ def add_citizen_to_db(citizen, cursor):
 
 
 def check_citizen_eligible(citizen, cursor, cnx):
-
     if citizen.is_eligible_to_vote():
         add_citizen_to_db(citizen, cursor)
         cnx.commit()
@@ -102,6 +79,7 @@ class Party:
         self.name = name
         self.symbol_name = symbol_name
 
+
 def add_party_to_db(party, cursor):
     sql = '''INSERT INTO parties (name, symbol_name)
                  VALUES (%s, %s)'''
@@ -109,13 +87,11 @@ def add_party_to_db(party, cursor):
     cursor.execute(sql, values)
 
 
-
 def check_party_table(cursor):
+    create_party_table(cursor)
     cursor.execute("SELECT COUNT(*) FROM parties")
     party_count = cursor.fetchone()[0]
-    if party_count == 0:
-        print("It's not parties registered in system.")
-        home()
+    return party_count
 
 
 def show_party_details(cursor):
@@ -137,11 +113,13 @@ def check_nic_in_citizens_table(nic, cursor):
     return count > 0
 
 
-def add_candidate_to_db(candidate, cursor):
-    sql = '''INSERT INTO candidates (nic, party, education)
-             VALUES (%s, %s, %s)'''
-    values = (candidate.nic, candidate.party, candidate.education)
-    cursor.execute(sql, values)
+def check_in_party_table(name, symbol_name, cursor):
+    cursor.execute("SELECT COUNT(*) FROM parties WHERE name = %s", (name,))
+    pn = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM parties WHERE symbol_name = %s", (symbol_name,))
+    ps = cursor.fetchone()[0]
+
+    return pn, ps
 
 
 def show_citizen_details(cursor):
@@ -151,27 +129,22 @@ def show_citizen_details(cursor):
     if not citizens:
         print("No citizen details found.")
     else:
-        print("Citizen details:")
+        print("\t\t\t\t\t\t Citizen details:")
+        print("\t-----------------------------------------------------------------")
+        print("\t: NIC \t\t:\t Name \t\t:\t Age \t\t:\t State/Province :")
+        print("\t-----------------------------------------------------------------")
+
         for citizen in citizens:
             nic, name, age, state_province = citizen
-            print(f"NIC: {nic}, Name: {name}, Age: {age}, State/Province: {state_province}")
+            print(f"\t: {nic} \t\t:\t {name} \t\t:\t  {age} \t\t:\t  {state_province} :")
+            print("\t-----------------------------------------------------------------")
+
 
 def get_citizen_option():
-
     print("\n\t\t\t\t\t\t____________________________________")
     print("\t\t\t\t\t\tYou are in the Citizens Manage System")
     print("\t\t\t\t\t\t____________________________________")
-    print("\n\t\t 1) Add Citizen details \n\t\t 2) Show Citizens details\n")
-
-    choose = input("Enter your option : ")
-    print("\n")
-    return choose
-
-def get_candidate_option():
-    print("\n\t\t\t\t\t\t______________________________________")
-    print("\t\t\t\t\t\tYou are in the Candidates Manage System")
-    print("\t\t\t\t\t\t______________________________________")
-    print("\n\t\t 1) Add Candidate details \n\t\t 2) Show Candidates details\n")
+    print("\n\t\t 1) Add Citizen details \n\t\t 2) Show Citizens details \n\t\t 3) Update Citizens details \n\t\t 4) Delete Citizens details")
 
     choose = input("Enter your option : ")
     print("\n")
@@ -196,22 +169,67 @@ def show_party_details(cursor):
     if not parties:
         print("No party details found.")
     else:
-        print("Party details:")
+        print("\t\t\tParty details:")
+        print("\t-------------------------")
+        print("\t: Name \t\t:\t Symbol :")
+        print("\t-------------------------")
         for party in parties:
             name, symbol_name = party
-            print(f"Name: {name}, Symbol: {symbol_name}")
+            print(f"\t: {name} \t\t:\t {symbol_name} :")
+            print("\t-------------------------")
 
-def show_candidate_details(cursor):
-    cursor.execute("SELECT * FROM candidates")
-    candidates = cursor.fetchall()
 
-    if not candidates:
-        print("No candidate details found.")
-    else:
-        print("Candidate details:")
-        for candidate in candidates:
-            nic, name, age, state_province, party, education = candidate
-            print(f"NIC: {nic}, Name: {name}, Age: {age}, State/Province: {state_province}, Party: {party}, Education: {education}")
+def enter_nic():
+    nic = input("Enter NIC: ")
+    return nic
+
+
+def create_candidates_table(cursor):
+    cursor.execute('''CREATE TABLE IF NOT EXISTS candidates
+                          (nic VARCHAR(255) PRIMARY KEY,
+                           party VARCHAR(255),
+                           education VARCHAR(255))''')
+
+
+def check_nic_in_citizens_table(nic, cursor):
+    cursor.execute("SELECT COUNT(*) FROM citizens WHERE nic = %s", (nic,))
+    count = cursor.fetchone()[0]
+    return count > 0
+
+
+class Candidate(Citizen):
+    def __init__(self, nic, name, age, state_province, party, education):
+        super().__init__(nic, name, age, state_province)
+        self.party = party
+        self.education = education
+
+
+def get_candidate_details():
+    party = input("enter party name: ")
+    education = input("enter education qualifications: ")
+    return party, education
+
+
+def add_candidate_to_db(candidate, cursor):
+    sql = '''INSERT INTO candidates (nic, party, education)
+             VALUES (%s, %s, %s)'''
+    values = (candidate.nic, candidate.party, candidate.education)
+    cursor.execute(sql, values)
+
+
+def get_citizen_by_nic(nic, cursor):
+    query = "SELECT * FROM citizens WHERE nic = %s"
+    cursor.execute(query, (nic,))
+    result = cursor.fetchone()
+    nic, name, age, state_province = result
+    return nic, name, age, state_province
+
+
+def choose_citizen_details():
+    print("What are you want to update details,Enter the numbers:")
+    print("\n1) NIC \n2) Name \n3) Age \n4) State/Province")
+
+
 
 
 
@@ -227,13 +245,9 @@ def main():
 
     cnx.database = 'election'
 
-
-
-
     while True:
 
         option = home()
-
 
         if option == '4':
             break
@@ -241,25 +255,40 @@ def main():
         if option == '1':
 
             create_citizen_table(cursor)
-
             choose = get_citizen_option()
 
             if choose == '2':
-
                 show_citizen_details(cursor)
 
             elif choose == '1':
+                nic = enter_nic()
+                count = check_nic_in_citizens_table(nic, cursor)
 
-                nic, name, state_province, age = get_citizen_details()
+                if count == 1:
+                    print("User already registered in system")
+                    home()
 
-                citizen = Citizen(nic, name, age, state_province)
+                else:
+                    name, state_province, age = get_citizen_details()
+                    citizen = Citizen(nic, name, age, state_province)
+                    check_citizen_eligible(citizen, cursor, cnx)
 
-                check_citizen_eligible(citizen, cursor, cnx)
+            elif choose == '3':
+
+                choose_citizen_details()
+
+
+
+
+
+
+
+
+
 
             else:
                 print("\t\tInvalid input")
                 home()
-
 
         if option == '2':
             create_party_table(cursor)
@@ -270,64 +299,63 @@ def main():
                 show_party_details(cursor)
 
             if choose == '1':
+
                 name, symbol_name = get_party_details()
 
-                party = Party(name, symbol_name)
+                pn, ps = check_in_party_table(name, symbol_name, cursor)
 
-                add_party_to_db(party, cursor)
+                if pn == 1 or ps == 1:
+                    print("Party name already exist")
+                    home()
+
+                elif ps == 1:
+                    print("Party symbol is already exist")
+                    home()
+
+                elif ps == 1 or ps == 1:
+                    print("party already registered")
+
+                else:
+                    party = Party(name, symbol_name)
+
+                    add_party_to_db(party, cursor)
 
                 cnx.commit()
 
-
-
-
         if option == '3':
+            party_count = check_party_table(cursor)
 
+            if party_count == 1:
 
-            check_party_table(cursor)
+                create_candidates_table(cursor)
+                nic = input("insert NIC: ")
+                count = check_nic_in_citizens_table(nic, cursor)
 
-            create_candidates_table(cursor)
+                if count == 0:
+                    print("Candidate not registered as citizen \n registered as citizen")
+                    name, state_province, age = get_citizen_details()
+                    citizen = Citizen(nic, name, age, state_province)
+                    check_citizen_eligible(citizen, cursor, cnx)
 
-            show_party_details(cursor)
+                else:
 
-            nic = input("insert nic: ")
+                    nic, name, age, state_province = get_citizen_by_nic(nic, cursor)
 
-            count = check_nic_in_citizens_table(nic, cursor)
+                    party, education = get_candidate_details()
 
-            if count == 1:
-                party, education = get_candidate_details()
+                    candidate = Candidate(nic, name, age, state_province, party, education)
 
-                candidate = Candidate(nic, party, education)
+                    add_candidate_to_db(candidate, cursor)
 
-                add_candidate_to_db(candidate, cursor)
-
-
-
-
-
+                    cnx.commit()
 
             else:
-
-                print("Candidate not registered as citizen \n registered as citizen")
-
-                nic, name, state_province, age = get_citizen_details()
-                party, education = get_candidate_details()
-
-                citizen = Citizen(nic, name, age, state_province)
-                candidate = Candidate(party, education)
-
-                check_citizen_eligible(citizen, cursor, cnx)
-                add_candidate_to_db(candidate, cursor)
-
-
-
-
-
-
-            cnx.commit()
+                print("It's not parties registered in system.")
+                home()
 
     cursor.close()
     cnx.close()
+
 
 if __name__ == "__main__":
     main()
